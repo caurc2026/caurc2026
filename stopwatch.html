@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CAURC 2026 OFFICIAL TIMER</title>
+    <style>
+        :root {
+            --neon-blue: #00f2ff;
+            --accent-red: #ff3c3c;
+            --bg-dark: #050505;
+            --transition-speed: 0.4s;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-dark);
+            color: white;
+            font-family: 'Arial Black', Gadget, sans-serif;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Animated Background Grid */
+        .grid-bg {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: 
+                linear-gradient(to right, rgba(0, 242, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(0, 242, 255, 0.03) 1px, transparent 1px);
+            background-size: 100px 100px;
+            z-index: -1;
+        }
+
+        /* Header Area */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 30px 80px;
+            background: rgba(255, 255, 255, 0.02);
+            border-bottom: 2px solid rgba(0, 242, 255, 0.3);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 40px;
+        }
+
+        #cau-logo {
+            height: 110px;
+            filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.2));
+            transition: transform var(--transition-speed) ease;
+        }
+
+        .event-name {
+            font-size: 4.5rem;
+            font-weight: 900;
+            letter-spacing: 4px;
+            color: white;
+            text-shadow: 2px 2px 0px var(--neon-blue);
+        }
+
+        /* Main Timer Section with added Margin */
+        main {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px; /* Space around the timer */
+            margin: 20px;
+        }
+
+        #timer-display {
+            font-variant-numeric: tabular-nums;
+            font-size: 26vw;
+            line-height: 1;
+            color: #ffffff;
+            /* Smooth transition for color and glow */
+            transition: color var(--transition-speed) ease, text-shadow var(--transition-speed) ease, transform var(--transition-speed) cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            user-select: none;
+            cursor: default;
+        }
+
+        .ms-small {
+            font-size: 10vw;
+            color: rgba(255, 255, 255, 0.3);
+            margin-left: -10px;
+            transition: color var(--transition-speed) ease;
+        }
+
+        /* Active State with Animation */
+        .active {
+            color: var(--neon-blue) !important;
+            text-shadow: 0 0 80px rgba(0, 242, 255, 0.6);
+            transform: scale(1.02); /* Slight swell when active */
+        }
+
+        .active .ms-small {
+            color: var(--neon-blue) !important;
+            opacity: 0.8;
+        }
+
+        /* Footer / Controls */
+        footer {
+            height: 120px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 60px;
+            background: linear-gradient(to top, rgba(0,0,0,1), transparent);
+        }
+
+        .btn-reset {
+            background: transparent;
+            color: var(--accent-red);
+            border: 3px solid var(--accent-red);
+            padding: 12px 50px;
+            font-size: 1.8rem;
+            font-weight: bold;
+            border-radius: 12px;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.2s ease;
+        }
+
+        .btn-reset:hover {
+            background: var(--accent-red);
+            color: white;
+            box-shadow: 0 0 30px rgba(255, 60, 60, 0.4);
+        }
+
+        .instructions {
+            color: #666;
+            font-family: sans-serif;
+            font-size: 1.4rem;
+            letter-spacing: 2px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="grid-bg"></div>
+
+    <header>
+        <div class="logo-container">
+            <img src="caulogo.png" id="cau-logo" alt="CAU">
+            <div class="event-name">CAURC 2026</div>
+        </div>
+        <div style="font-size: 2.2rem; color: var(--neon-blue); font-weight: bold; letter-spacing: 2px;">
+            COMPETITION TIMER
+        </div>
+    </header>
+
+    <main>
+        <div id="timer-display">
+            <span id="m">00</span>:<span id="s">00</span><span class="ms-small" id="ms">.00</span>
+        </div>
+    </main>
+
+    <footer>
+        <button class="btn-reset" onclick="reset()">Reset</button>
+        <div class="instructions">[ SPACE ] START &bull; STOP</div>
+    </footer>
+
+    <script>
+        let startTime, elapsedTime = 0, timerInterval;
+        let running = false;
+
+        const displayM = document.getElementById('m');
+        const displayS = document.getElementById('s');
+        const displayMS = document.getElementById('ms');
+        const mainDisplay = document.getElementById('timer-display');
+
+        function update() {
+            let now = Date.now();
+            elapsedTime = now - startTime;
+            
+            let totalSeconds = Math.floor(elapsedTime / 1000);
+            let minutes = Math.floor(totalSeconds / 60);
+            let seconds = totalSeconds % 60;
+            let milliseconds = Math.floor((elapsedTime % 1000) / 10);
+
+            displayM.textContent = minutes.toString().padStart(2, '0');
+            displayS.textContent = seconds.toString().padStart(2, '0');
+            displayMS.textContent = '.' + milliseconds.toString().padStart(2, '0');
+        }
+
+        function start() {
+            startTime = Date.now() - elapsedTime;
+            timerInterval = setInterval(update, 10);
+            running = true;
+            mainDisplay.classList.add('active');
+        }
+
+        function stop() {
+            clearInterval(timerInterval);
+            running = false;
+            mainDisplay.classList.remove('active');
+        }
+
+        function reset() {
+            stop();
+            elapsedTime = 0;
+            displayM.textContent = '00';
+            displayS.textContent = '00';
+            displayMS.textContent = '.00';
+        }
+
+        // Global key listener for spacebar
+        window.addEventListener('keydown', (e) => {
+            if (e.code === "Space") {
+                e.preventDefault();
+                running ? stop() : start();
+            }
+        });
+    </script>
+</body>
+</html>
